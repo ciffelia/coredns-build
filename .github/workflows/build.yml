@@ -7,8 +7,6 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-        with:
-          path: coredns-build
 
       - uses: actions/checkout@v3
         with:
@@ -27,23 +25,34 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Apply plugin config
-        run: cp --force ./coredns-build/{.goreleaser.yaml,plugin.cfg} ./coredns
+        run: cp --force ./plugin.cfg ./coredns
 
       - run: go generate coredns.go
         working-directory: ./coredns
 
+      - run: go get
+        working-directory: ./coredns
+
+      - name: go build
+        run: ./go-build
+
       - name: Login to GitHub Container Registry
+        if: github.ref == 'refs/heads/main'
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create a git tag required by GoRelease
-        run: git tag v0.0.0
-        working-directory: ./coredns
-
-      - uses: goreleaser/goreleaser-action@v3
+      - name: Build (and push)
+        uses: docker/build-push-action@v3
         with:
-          args: release --skip-validate
-          workdir: ./coredns
+          context: .
+          tags: |
+            ghcr.io/ciffelia/coredns:git-${{ github.sha }}
+            ghcr.io/ciffelia/coredns:latest
+          platforms: |
+            linux/amd64
+            linux/arm/v7
+            linux/arm64
+          push: ${{ github.ref == 'refs/heads/main' }}
