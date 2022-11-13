@@ -45,5 +45,5 @@ jobs:
 
       - uses: goreleaser/goreleaser-action@v3
         with:
-          args: release
+          args: release --skip-validate
           workdir: ./coredns
