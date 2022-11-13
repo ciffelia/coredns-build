@@ -1,7 +1,7 @@
 FROM --platform=$BUILDPLATFORM debian:stable-slim as certs-fetcher
 
 RUN apt-get update && \
-  apt-get install ca-certificates
+  apt-get install -y ca-certificates
 
 FROM scratch
 
